@@ -37,17 +37,45 @@ def calculate_walls_coordinates(screen_width, screen_height, wall_block_width, w
 
     return walls_coordinates
 
+# тут добавил рандомный лабиринт
+def calculate_lab_coordinates(screen_width, screen_height, wall_block_width, wall_block_height):
+    horizontal_wall_blocks_amount = screen_width // wall_block_width
+    vertical_wall_blocks_amount = screen_height // wall_block_height - 2
+
+    lab_coordinates = []
+    random_lab = random.randint(2,4)
+    for block_num in range(2,horizontal_wall_blocks_amount):
+        if block_num%random_lab!=0:
+            lab_coordinates.extend([
+                (block_num * wall_block_width, wall_block_height*3),
+                (block_num * wall_block_width, wall_block_height*6),
+                (block_num * wall_block_width, wall_block_height*9),
+            ])
+    for block_num in range(2, vertical_wall_blocks_amount + random_lab):
+        if block_num%random_lab!=0:
+            lab_coordinates.extend([
+                (wall_block_width*3, block_num * wall_block_height),
+                (wall_block_width*6, block_num * wall_block_height),
+                (wall_block_width*9, block_num * wall_block_height),
+                (wall_block_width*12, block_num * wall_block_height)
+            ])
+
+    return lab_coordinates
+
 
 def compose_context(screen):
     walls_coordinates = calculate_walls_coordinates(screen.get_width(), screen.get_height(), Wall.width, Wall.height)
+    lab_coordinates = calculate_lab_coordinates(screen.get_width() - 160, screen.get_height() - 160, Wall.width, Wall.height)
+    all_coordinates = walls_coordinates + lab_coordinates
+    # all_coordinates = walls_coordinates
     return {
-        "player": Player(screen.get_width() // 2, screen.get_height() // 2),
-        "walls": Group(*[Wall(x, y) for (x, y) in walls_coordinates]),
+        "player": Player(40, 400),
+        "walls": Group(*[Wall(x, y) for (x, y) in all_coordinates]),
         "score": 10,
-        "chest": Chest(100, 100),
-        "chest_2": Chest(500, 340),
+        "chest": Chest(40, 40),
+        "chest_2": Chest(560, 40),
         # "chest_3": Chest(100, 340),
-        # "chest_4": Chest(500, 100),
+        # "chest_4": Chest(500, 340),
     }
 
 
@@ -92,7 +120,8 @@ def main():
         if keys[pygame.K_d]:
             context["player"].rect = context["player"].rect.move(player_speed, 0)
 
-
+        old_chest_topleft = context["chest"].rect.topleft
+        old_chest_2_topleft = context["chest_2"].rect.topleft
         # вот тут попробую подвигать ящик
         def move_chest(chest):
             # chest_speed = 1
@@ -123,20 +152,24 @@ def main():
 
         if spritecollide(context["player"], context["walls"], dokill=False):
             context["player"].rect.topleft = old_player_topleft
+
+        if spritecollide(context["chest"], context["walls"], dokill=False):
+            context["chest"].rect.topleft = old_chest_topleft
+
+        if spritecollide(context["chest_2"], context["walls"], dokill=False):
+            context["chest_2"].rect.topleft = old_chest_2_topleft
             
         for chest in (context["chest"], context["chest_2"]):
             if context["player"].is_collided_with(chest):
                 context["score"] -= 1
-                chest.rect.topleft = (
-                    random.randint(Wall.width, screen.get_width() - Wall.width * 2),
-                    random.randint(Wall.height, screen.get_height() - Wall.height * 2),
-            )
+                chest.rect.topleft = random.choice(
+                    [(40, 40), (560, 40), (40, 400)]
+                    )
         
         if context["chest"].is_collided_with(context["chest_2"]):
-                context["chest"].rect.topleft = (
-                    random.randint(Wall.width, screen.get_width() - Wall.width * 2),
-                    random.randint(Wall.height, screen.get_height() - Wall.height * 2),
-            )
+                context["chest"].rect.topleft = random.choice(
+                    [(40, 40), (560, 40), (40, 400)]
+                    )
 
         if context["score"] == 0:
 
