@@ -1,0 +1,6 @@
+.vscode
+venv
+fix_1.py
+fix_2.py
+fix_3.py
+__pycache__
